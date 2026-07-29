@@ -9,7 +9,7 @@ const startServer = async () => {
 
     // Start Express server
     app.listen(envConfig.PORT, () => {
-      console.log(`\n Homely Server is running`);
+      console.log(`\n BidArena Server is running`);
       console.log(`   Environment : ${envConfig.NODE_ENV}`);
       console.log(`   Port        : ${envConfig.PORT}`);
       console.log(`   URL         : http://localhost:${envConfig.PORT}`);

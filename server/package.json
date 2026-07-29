@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "BidArena - Server",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -9,7 +9,7 @@
     "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "BidArena",
   "license": "ISC",
   "type": "module",
   "dependencies": {
