@@ -14,12 +14,6 @@ import { verifyToken } from "../utils/jwt.util.js";
   */
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return sendError(res, 400, "Please provide name, email and password");
-    }
-
     const data = await authService.registerUser(req.body);
     setTokenCookies(res, data.accessToken, data.refreshToken);
 
@@ -35,10 +29,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return sendError(res, 400, "Please provide email and password");
-    }
 
     const data = await authService.loginUser(email, password);
     setTokenCookies(res, data.accessToken, data.refreshToken);
