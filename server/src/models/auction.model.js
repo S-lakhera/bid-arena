@@ -1,28 +1,28 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const auctionSchema = new mongoose.Schema(
   {
     seller: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     title: {
       type: String,
-      required: [true, 'Please add a title'],
+      required: [true, "Please add a title"],
       trim: true,
     },
     description: {
       type: String,
-      required: [true, 'Please add a description'],
+      required: [true, "Please add a description"],
     },
     image: {
       type: String,
-      default: 'no-image.jpg',
+      default: "no-image.jpg",
     },
     startBid: {
       type: Number,
-      required: [true, 'Please add a starting bid'],
+      required: [true, "Please add a starting bid"],
       min: 0,
     },
     currentHighestBid: {
@@ -31,20 +31,20 @@ const auctionSchema = new mongoose.Schema(
     },
     highestBidder: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     status: {
       type: String,
-      enum: ['upcoming', 'active', 'completed', 'paid'],
-      default: 'upcoming',
+      enum: ["upcoming", "active", "completed"],
+      default: "upcoming",
     },
     startTime: {
       type: Date,
-      required: [true, 'Please add a start time'],
+      required: [true, "Please add a start time"],
     },
     duration: {
-      type: Number, // duration in milliseconds or seconds
-      required: [true, 'Please add a duration'],
+      type: Number, // duration in seconds
+      required: [true, "Please add a duration"],
     },
     endTime: {
       type: Date,
@@ -52,21 +52,21 @@ const auctionSchema = new mongoose.Schema(
     },
     winner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Before saving, ensure endTime is calculated if not explicitly set
-auctionSchema.pre('validate', function(next) {
+auctionSchema.pre("validate", function (next) {
   if (this.startTime && this.duration && !this.endTime) {
     this.endTime = new Date(this.startTime.getTime() + this.duration);
   }
   next();
 });
 
-const Auction = mongoose.model('Auction', auctionSchema);
+const Auction = mongoose.model("Auction", auctionSchema);
 export default Auction;

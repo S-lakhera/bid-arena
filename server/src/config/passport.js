@@ -1,15 +1,17 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import User from '../models/user.model.js';
-import dotenv from 'dotenv';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import User from "../models/user.model.js";
+import dotenv from "dotenv";
 dotenv.config();
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder_client_secret',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
+      clientID: process.env.GOOGLE_CLIENT_ID || "placeholder_client_id",
+      clientSecret:
+        process.env.GOOGLE_CLIENT_SECRET || "placeholder_client_secret",
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL || "/api/v1/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -27,7 +29,11 @@ passport.use(
           if (user) {
             // Update user to include googleId
             user.googleId = profile.id;
-            if (!user.profileImage && profile.photos && profile.photos.length > 0) {
+            if (
+              !user.profileImage &&
+              profile.photos &&
+              profile.photos.length > 0
+            ) {
               user.profileImage = profile.photos[0].value;
             }
             await user.save();
@@ -38,7 +44,10 @@ passport.use(
               googleId: profile.id,
               name: profile.displayName,
               email: profile.emails[0].value,
-              profileImage: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : 'default.jpg',
+              profileImage:
+                profile.photos && profile.photos.length > 0
+                  ? profile.photos[0].value
+                  : "default.jpg",
             };
 
             user = await User.create(newUser);
@@ -49,8 +58,8 @@ passport.use(
         console.error(error);
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 export default passport;
