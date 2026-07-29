@@ -28,6 +28,8 @@ export const register = async (req, res) => {
     if (error.message === "User already exists") {
       return sendError(res, 400, error.message);
     }
+    console.log(error);
+
     sendError(res, 500, "Server Error");
   }
 };
