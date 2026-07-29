@@ -38,8 +38,12 @@ if (envConfig.NODE_ENV === "development") {
 // ─── API Versioning ──────────────────────────────────────
 
 // v1 routes
-// app.use("/api/v1", v1Routes);
+import authRoutes from './routes/auth.routes.js';
+import passport from './config/passport.js';
 
+app.use(passport.initialize());
+
+app.use("/api/v1/auth", authRoutes);
 // ─── Health Check ────────────────────────────────────────
 
 app.get("/api/v1/health", (_req, res) => {
