@@ -77,7 +77,7 @@ export const refreshToken = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    const token = req.body.refreshToken || req.cookies.refreshToken;
+    const token = req.body?.refreshToken || req.cookies?.refreshToken;
 
     if (req.user && token) {
       await authService.logoutUser(req.user._id, token);
@@ -95,7 +95,7 @@ export const logout = async (req, res) => {
 
     sendSuccess(res, 200, "User logged out successfully");
   } catch (error) {
-    sendError(res, 500, "Server Error");
+    sendError(res, 500, error.stack || "Server Error");
   }
 };
 

@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { motion } from 'motion/react';
 
 function LoginContent() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,11 @@ function LoginContent() {
   };
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <h3 className="text-xl font-medium text-slate-900 mb-6 text-center">Sign in to your account</h3>
       
       {displayError && (
@@ -94,13 +99,15 @@ function LoginContent() {
 
 
         <div>
-          <button
+          <motion.button
             type="submit"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             disabled={isLoggingIn}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
           >
             {isLoggingIn ? 'Signing in...' : 'Sign in'}
-          </button>
+          </motion.button>
         </div>
       </form>
 
@@ -136,7 +143,7 @@ function LoginContent() {
           Register now
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
