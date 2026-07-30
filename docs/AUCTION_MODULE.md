@@ -106,13 +106,22 @@ The Socket.IO server is used to manage real-time bids, countdown timers, and liv
   ```
 
 #### `bid-update`
-- **Description:** Broadcasts instantly when a valid bid is placed.
+- **Description:** Broadcasts instantly when a valid bid is placed, and emitted to a client immediately upon joining.
 - **Payload:**
   ```json
   {
     "currentHighestBid": 250,
     "highestBidder": "userId_here",
     "timestamp": "2026-07-30T10:00:00.000Z"
+  }
+  ```
+
+#### `active-bidders-count`
+- **Description:** Emitted to a client when they join an active auction room, indicating the number of unique users who have placed bids.
+- **Payload:**
+  ```json
+  {
+    "count": 5
   }
   ```
 

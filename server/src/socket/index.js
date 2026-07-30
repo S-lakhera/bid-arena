@@ -60,6 +60,17 @@ export const initializeSocket = (server) => {
     socket.on("join-room", (auctionId) => {
       socket.join(auctionId);
       console.log(`Socket ${socket.id} joined room ${auctionId}`);
+
+      const state = engine.getAuctionState(auctionId);
+      if (state) {
+        socket.emit("timer-sync", { timeLeft: state.timeLeft });
+        socket.emit("bid-update", {
+          currentHighestBid: state.currentHighestBid,
+          highestBidder: state.highestBidder,
+          timestamp: new Date(),
+        });
+        socket.emit("active-bidders-count", { count: state.activeBiddersCount });
+      }
     });
 
     // Handle bids

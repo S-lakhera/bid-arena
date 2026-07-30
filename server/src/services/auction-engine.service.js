@@ -64,6 +64,21 @@ class AuctionEngine {
     this.processingQueues.set(auctionId, Promise.resolve());
   }
 
+  getAuctionState(auctionId) {
+    const state = this.activeAuctions.get(auctionId);
+    if (!state) return null;
+
+    const now = Date.now();
+    const timeLeft = Math.max(0, Math.floor((state.endTime - now) / 1000));
+    
+    return {
+      currentHighestBid: state.currentHighestBid,
+      highestBidder: state.highestBidder,
+      timeLeft,
+      activeBiddersCount: state.activeBidders.size,
+    };
+  }
+
   _tick(auctionId) {
     const state = this.activeAuctions.get(auctionId);
     if (!state) return;
