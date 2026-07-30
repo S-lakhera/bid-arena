@@ -33,6 +33,7 @@ export const createAuction = async (req, res) => {
  * @route GET /api/v1/auctions
  * @access Public
  * @success 200 Auctions retrieved successfully
+ * @query {status: "active" | "upcoming" | "completed"} Status to filter auctions by
  */
 export const getAuctions = async (req, res) => {
   const filters = {};
