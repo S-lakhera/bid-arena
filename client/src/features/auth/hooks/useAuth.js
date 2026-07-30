@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { authApi } from '../api/authApi';
 import { setAuth, logout as logoutAction, setInitialized } from '@/store/slices/authSlice';
 
@@ -11,21 +12,24 @@ export const useAuth = () => {
 
   // Query to get current user (e.g., on app load)
   const useGetMe = () => {
-    return useQuery({
+    const query = useQuery({
       queryKey: ['me'],
       queryFn: authApi.getMe,
       retry: false,
       staleTime: Infinity, // Rely on cache unless explicitly invalidated
-      onSuccess: (data) => {
-        dispatch(setAuth({ user: data.data }));
-      },
-      onError: () => {
+    });
+
+    useEffect(() => {
+      if (query.isSuccess) {
+        dispatch(setAuth({ user: query.data.data }));
+        dispatch(setInitialized());
+      } else if (query.isError) {
         dispatch(logoutAction());
-      },
-      onSettled: () => {
         dispatch(setInitialized());
       }
-    });
+    }, [query.isSuccess, query.isError, query.data]);
+
+    return query;
   };
 
   const loginMutation = useMutation({
@@ -49,7 +53,8 @@ export const useAuth = () => {
 
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
-    onSuccess: () => {
+    onSettled: () => {
+      // Clean up local auth state regardless of whether the API call succeeds or fails
       dispatch(logoutAction());
       queryClient.setQueryData(['me'], null);
       queryClient.clear();
