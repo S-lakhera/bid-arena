@@ -14,7 +14,20 @@ const app = express();
 // CORS configuration
 app.use(
   cors({
-    origin: envConfig.ALLOWED_ORIGINS,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      // Allow localhost or local network IPs for development
+      if (envConfig.NODE_ENV === "development" && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      // Check against configured allowed origins
+      const allowedOrigins = Array.isArray(envConfig.ALLOWED_ORIGINS) ? envConfig.ALLOWED_ORIGINS : [envConfig.ALLOWED_ORIGINS];
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -40,12 +53,14 @@ if (envConfig.NODE_ENV === "development") {
 // v1 routes
 import authRoutes from "./routes/auth.routes.js";
 import auctionRoutes from "./routes/auction.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 import passport from "./config/passport.js";
 
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/auctions", auctionRoutes);
+app.use("/api/v1/payments", paymentRoutes);
 // ─── Health Check ────────────────────────────────────────
 
 app.get("/api/v1/health", (_req, res) => {
