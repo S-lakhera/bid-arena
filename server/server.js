@@ -1,8 +1,8 @@
-import http from 'http';
-import app from './src/app.js';
-import envConfig from './src/config/env.config.js';
-import DatabaseConfig from './src/config/db.config.js';
-import { initializeSocket } from './src/socket/index.js';
+import http from "http";
+import app from "./src/app.js";
+import envConfig from "./src/config/env.config.js";
+import DatabaseConfig from "./src/config/db.config.js";
+import { initializeSocket } from "./src/socket/index.js";
 
 const startServer = async () => {
   try {
@@ -17,14 +17,16 @@ const startServer = async () => {
 
     // Start server
     server.listen(envConfig.PORT, () => {
-      console.log(`\n Homely Server is running`);
+      console.log(`\n BidArena Server is running`);
       console.log(`   Environment : ${envConfig.NODE_ENV}`);
       console.log(`   Port        : ${envConfig.PORT}`);
       console.log(`   URL         : http://localhost:${envConfig.PORT}`);
-      console.log(`   Health      : http://localhost:${envConfig.PORT}/api/v1/health\n`);
+      console.log(
+        `   Health      : http://localhost:${envConfig.PORT}/api/v1/health\n`,
+      );
     });
   } catch (error) {
-    console.error('Failed to start server:', error.message);
+    console.error("Failed to start server:", error.message);
     process.exit(1);
   }
 };
