@@ -12,6 +12,7 @@ const router = express.Router();
 // Public routes
 router.get("/", auctionController.getAuctions);
 router.get("/:id", auctionController.getAuctionById);
+router.get("/:id/timeline", auctionController.getAuctionTimeline);
 
 // Protected routes
 router.use(protect);

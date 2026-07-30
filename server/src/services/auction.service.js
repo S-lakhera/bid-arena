@@ -1,4 +1,5 @@
 import Auction from "../models/auction.model.js";
+import Timeline from "../models/timeline.model.js";
 import { engine } from "./auction-engine.service.js";
 
 export const createAuction = async (auctionData) => {
@@ -29,4 +30,8 @@ export const deleteAuction = async (id) => {
     engine.removeAuction(id);
   }
   return deleted;
+};
+
+export const getAuctionTimeline = async (id) => {
+  return await Timeline.find({ auction: id }).sort({ timestamp: -1 });
 };

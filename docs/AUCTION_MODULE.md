@@ -46,6 +46,12 @@ Base URL: `/api/v1/auctions`
 - **Path:** `/api/v1/auctions/:id`
 - **Access:** Protected (Only the seller can delete)
 
+### 6. Get Auction Timeline
+- **Method:** `GET`
+- **Path:** `/api/v1/auctions/:id/timeline`
+- **Access:** Public
+- **Returns:** An array of timeline events (created, started, bid_placed, completed) sorted chronologically (newest first).
+
 ---
 
 ## ⚡ Real-Time Socket.IO Events
