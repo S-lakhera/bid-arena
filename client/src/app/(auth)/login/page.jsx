@@ -14,6 +14,8 @@ function LoginContent() {
 
   const urlError = searchParams.get('error') === 'auth_failed' ? 'Google authentication failed. Please try again.' : '';
   const displayError = error || urlError;
+  const redirectParam = searchParams.get('redirect');
+  const redirect = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +27,7 @@ function LoginContent() {
     }
 
     try {
-      await login({ email, password });
+      await login({ email, password, redirect });
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to login');
     }
@@ -80,25 +82,6 @@ function LoginContent() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded bg-white"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600">
-              Remember me
-            </label>
-          </div>
-
-          <div className="text-sm">
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
-              Forgot your password?
-            </a>
-          </div>
-        </div>
 
         <div>
           <button

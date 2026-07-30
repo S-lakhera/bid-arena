@@ -24,21 +24,32 @@ export const useAuth = () => {
         dispatch(setAuth({ user: query.data.data }));
         dispatch(setInitialized());
       } else if (query.isError) {
-        dispatch(logoutAction());
+        const status = query.error?.response?.status;
+        if (status === 401 || status === 403) {
+          dispatch(logoutAction());
+        }
         dispatch(setInitialized());
       }
-    }, [query.isSuccess, query.isError, query.data]);
+    }, [query.isSuccess, query.isError, query.data, query.error]);
 
     return query;
   };
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // API returns response.data -> { success: true, message: '...', data: { user: {...}, accessToken, refreshToken } }
       dispatch(setAuth({ user: data.data.user }));
       queryClient.setQueryData(['me'], { data: data.data.user });
-      router.push('/'); // Redirect after login
+      
+      let target = '/';
+      if (variables?.redirect && typeof variables.redirect === 'string') {
+        const r = variables.redirect;
+        if (r.startsWith('/') && !r.startsWith('//')) {
+          target = r;
+        }
+      }
+      router.push(target); // Redirect after login
     },
   });
 
