@@ -165,3 +165,31 @@ export const deleteAuction = async (req, res) => {
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, "Auction deleted successfully"));
 };
+
+/**
+ * @desc Get Auction Timeline
+ * @route GET /api/v1/auctions/:id/timeline
+ * @access Public
+ * @success 200 Timeline retrieved successfully
+ * @error 404 Auction not found
+ */
+export const getAuctionTimeline = async (req, res) => {
+  const auction = await auctionService.getAuctionById(req.params.id);
+  if (!auction) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json(new ApiResponse(StatusCodes.NOT_FOUND, "Auction not found"));
+  }
+
+  const timeline = await auctionService.getAuctionTimeline(req.params.id);
+  
+  res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        "Timeline retrieved successfully",
+        timeline,
+      ),
+    );
+};
