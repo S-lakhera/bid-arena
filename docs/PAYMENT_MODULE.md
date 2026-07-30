@@ -9,7 +9,7 @@ The payment module handles the checkout process for the winner of a completed au
 ## Dependencies
 
 - **razorpay**: The official Node.js SDK for Razorpay.
-- **crypto**: Native Node.js module used to verify webhooks/signatures.
+- **crypto**: Native Node.js module used to verify Razorpay checkout signatures.
 - **zod**: Used for payload validation on the verify endpoint.
 
 ## Environment Variables
@@ -112,6 +112,6 @@ Verifies the payment after the frontend checkout is complete.
 1. **Initiate**: The winner clicks "Pay Now" on a completed auction.
 2. **Order Creation**: Frontend hits `POST /api/v1/payments/create-order/:auctionId`.
 3. **Checkout Modal**: Frontend initializes the Razorpay checkout script using the `order.id` and `amount` returned from the API.
-4. **Success Callback**: Upon successful card entry, the Razorpay modal's `handler` function receives the `payment_id`, `order_id`, and `signature`.
+4. **Success Callback**: Upon successful card entry, the Razorpay modal's `handler` function receives `razorpay_payment_id`, `razorpay_order_id`, and `razorpay_signature`.
 5. **Verification**: Frontend sends those 3 fields to `POST /api/v1/payments/verify`.
 6. **Socket Broadcast**: The backend verifies, updates the DB, and emits the `payment-success` socket event so all users on the page instantly see the auction is paid!

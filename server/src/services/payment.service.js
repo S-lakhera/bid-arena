@@ -18,7 +18,7 @@ class PaymentService {
    */
   async createRazorpayOrder(amount, receiptId) {
     const options = {
-      amount: amount * 100, // amount in the smallest currency unit (paise)
+      amount: Math.round(amount * 100), // amount in the smallest currency unit (paise)
       currency: "INR",
       receipt: receiptId,
     };
@@ -39,7 +39,14 @@ class PaymentService {
       .update(body.toString())
       .digest("hex");
 
-    return expectedSignature === signature;
+    const expectedBuffer = Buffer.from(expectedSignature, "hex");
+    const signatureBuffer = Buffer.from(signature, "hex");
+
+    if (expectedBuffer.length !== signatureBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
   }
 }
 

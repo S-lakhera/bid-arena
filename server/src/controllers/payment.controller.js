@@ -28,7 +28,7 @@ export const createCheckoutSession = async (req, res) => {
       .json(new ApiResponse(StatusCodes.BAD_REQUEST, "Auction is not completed yet"));
   }
 
-  if (auction.winner.toString() !== userId.toString()) {
+  if (!auction.winner || auction.winner.toString() !== userId.toString()) {
     return res
       .status(StatusCodes.FORBIDDEN)
       .json(new ApiResponse(StatusCodes.FORBIDDEN, "Only the winner can initiate payment"));
@@ -40,19 +40,34 @@ export const createCheckoutSession = async (req, res) => {
       .json(new ApiResponse(StatusCodes.BAD_REQUEST, "Auction is already paid"));
   }
 
+  const lockedAuction = await Auction.findOneAndUpdate(
+    { _id: auctionId, paymentStatus: { $ne: "paid" }, razorpayOrderId: { $exists: false } },
+    { $set: { razorpayOrderId: "pending_creation" } },
+    { new: true }
+  );
+
+  if (!lockedAuction) {
+    const currentAuction = await Auction.findById(auctionId);
+    if (currentAuction?.paymentStatus === "paid") {
+      return res.status(StatusCodes.BAD_REQUEST).json(new ApiResponse(StatusCodes.BAD_REQUEST, "Auction is already paid"));
+    }
+    return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, "Order creation already in progress or completed"));
+  }
+
   try {
-    const amount = auction.currentHighestBid;
+    const amount = lockedAuction.currentHighestBid;
     const order = await paymentService.createRazorpayOrder(amount, auctionId);
     
-    // Save order id to auction
-    auction.razorpayOrderId = order.id;
-    await auction.save();
+    // Save actual order id to auction
+    lockedAuction.razorpayOrderId = order.id;
+    await lockedAuction.save();
 
     res
       .status(StatusCodes.CREATED)
       .json(new ApiResponse(StatusCodes.CREATED, "Order created successfully", order));
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
+    await Auction.updateOne({ _id: auctionId }, { $unset: { razorpayOrderId: 1 } });
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Error creating payment order"));
@@ -86,6 +101,12 @@ export const verifyPayment = async (req, res) => {
       return res
         .status(StatusCodes.NOT_FOUND)
         .json(new ApiResponse(StatusCodes.NOT_FOUND, "Auction not found for this order"));
+    }
+
+    if (auction.paymentStatus === "paid") {
+      return res
+        .status(StatusCodes.OK)
+        .json(new ApiResponse(StatusCodes.OK, "Payment verified successfully"));
     }
 
     auction.paymentStatus = "paid";
