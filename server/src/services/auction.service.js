@@ -2,6 +2,9 @@ import Auction from "../models/auction.model.js";
 import { engine } from "./auction-engine.service.js";
 
 export const createAuction = async (auctionData) => {
+  if (auctionData.currentHighestBid === undefined && auctionData.startBid !== undefined) {
+    auctionData.currentHighestBid = auctionData.startBid;
+  }
   const auction = new Auction(auctionData);
   const savedAuction = await auction.save();
   engine.addAuction(savedAuction);
@@ -9,11 +12,11 @@ export const createAuction = async (auctionData) => {
 };
 
 export const getAuctions = async (filters = {}) => {
-  return await Auction.find(filters).populate("seller", "name email");
+  return await Auction.find(filters).populate("seller", "name");
 };
 
 export const getAuctionById = async (id) => {
-  return await Auction.findById(id).populate("seller", "name email").populate("highestBidder", "name email");
+  return await Auction.findById(id).populate("seller", "name").populate("highestBidder", "name");
 };
 
 export const updateAuction = async (id, updateData) => {
@@ -21,5 +24,9 @@ export const updateAuction = async (id, updateData) => {
 };
 
 export const deleteAuction = async (id) => {
-  return await Auction.findByIdAndDelete(id);
+  const deleted = await Auction.findByIdAndDelete(id);
+  if (deleted) {
+    engine.removeAuction(id);
+  }
+  return deleted;
 };

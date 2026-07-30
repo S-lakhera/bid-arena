@@ -20,7 +20,7 @@ export const addRefreshToken = async (userId, token) => {
   return await User.findByIdAndUpdate(
     userId,
     { $push: { refreshTokens: token } },
-    { new: true },
+    { returnDocument: "after" },
   );
 };
 
@@ -28,7 +28,7 @@ export const removeRefreshToken = async (userId, token) => {
   return await User.findByIdAndUpdate(
     userId,
     { $pull: { refreshTokens: token } },
-    { new: true },
+    { returnDocument: "after" },
   );
 };
 

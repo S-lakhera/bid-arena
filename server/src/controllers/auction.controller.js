@@ -38,7 +38,10 @@ export const createAuction = async (req, res) => {
 export const getAuctions = async (req, res) => {
   const filters = {};
   if (req.query.status) {
-    filters.status = req.query.status;
+    const status = String(req.query.status);
+    if (["upcoming", "active", "completed"].includes(status)) {
+      filters.status = status;
+    }
   }
   const auctions = await auctionService.getAuctions(filters);
   res
@@ -106,9 +109,17 @@ export const updateAuction = async (req, res) => {
       );
   }
 
+  const allowedUpdates = ["title", "description", "startBid", "duration", "startTime", "image"];
+  const updatePayload = {};
+  for (const key of allowedUpdates) {
+    if (req.body[key] !== undefined) {
+      updatePayload[key] = req.body[key];
+    }
+  }
+
   const updatedAuction = await auctionService.updateAuction(
     req.params.id,
-    req.body,
+    updatePayload,
   );
   res
     .status(StatusCodes.OK)

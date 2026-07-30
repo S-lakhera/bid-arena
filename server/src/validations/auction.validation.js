@@ -10,7 +10,7 @@ export const createAuctionSchema = z.object({
       .min(60, "Duration must be at least 1 minute (60 seconds)"),
     startTime: z
       .string()
-      .datetime("Invalid start time format (must be ISO-8601)"),
+      .datetime({ message: "Invalid start time format (must be ISO-8601)" }),
     image: z.string().optional(),
   }),
 });
@@ -30,7 +30,7 @@ export const updateAuctionSchema = z.object({
       .optional(),
     startTime: z
       .string()
-      .datetime("Invalid start time format (must be ISO-8601)")
+      .datetime({ message: "Invalid start time format (must be ISO-8601)" })
       .optional(),
     image: z.string().optional(),
   }),

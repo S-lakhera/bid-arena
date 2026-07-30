@@ -38,9 +38,9 @@ if (envConfig.NODE_ENV === "development") {
 // ─── API Versioning ──────────────────────────────────────
 
 // v1 routes
-import authRoutes from './routes/auth.routes.js';
-import auctionRoutes from './routes/auction.routes.js';
-import passport from './config/passport.js';
+import authRoutes from "./routes/auth.routes.js";
+import auctionRoutes from "./routes/auction.routes.js";
+import passport from "./config/passport.js";
 
 app.use(passport.initialize());
 

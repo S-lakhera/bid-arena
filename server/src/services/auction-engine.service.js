@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Auction from "../models/auction.model.js";
 import Bid from "../models/bid.model.js";
 import Timeline from "../models/timeline.model.js";
@@ -11,6 +12,11 @@ class AuctionEngine {
 
   // Load active auctions from DB on startup
   async loadActiveAuctions() {
+    const now = new Date();
+    await Auction.updateMany(
+      { status: "upcoming", startTime: { $lte: now } },
+      { $set: { status: "active" } }
+    );
     const active = await Auction.find({ status: "active" });
     console.log(
       `[AuctionEngine] Found ${active.length} active auctions in DB.`,
@@ -26,8 +32,20 @@ class AuctionEngine {
   // Add a newly created single auction to the engine dynamically
   addAuction(auction) {
     if (auction.status === "active") {
-      this._initializeAuctionState(auction);
-      console.log(`[AuctionEngine] Added newly created auction ${auction._id} into engine.`);
+      const auctionId = auction._id.toString();
+      if (!this.activeAuctions.has(auctionId)) {
+        this._initializeAuctionState(auction);
+        console.log(`[AuctionEngine] Added newly created auction ${auction._id} into engine.`);
+      }
+    }
+  }
+
+  removeAuction(auctionId) {
+    const state = this.activeAuctions.get(auctionId);
+    if (state) {
+      clearInterval(state.timer);
+      this.activeAuctions.delete(auctionId);
+      this.processingQueues.delete(auctionId);
     }
   }
 
@@ -35,7 +53,7 @@ class AuctionEngine {
     const auctionId = auction._id.toString();
     this.activeAuctions.set(auctionId, {
       id: auctionId,
-      currentHighestBid: auction.currentHighestBid,
+      currentHighestBid: auction.currentHighestBid || auction.startBid || 0,
       highestBidder: auction.highestBidder
         ? auction.highestBidder.toString()
         : null,
@@ -54,12 +72,27 @@ class AuctionEngine {
     const timeLeft = Math.max(0, Math.floor((state.endTime - now) / 1000));
 
     // Broadcast time left
-    const io = getIO();
-    io.to(auctionId).emit("timer-sync", { timeLeft });
+    try {
+      const io = getIO();
+      io.to(auctionId).emit("timer-sync", { timeLeft });
+    } catch (err) {
+      console.error(`[AuctionEngine] Error emitting timer-sync for ${auctionId}:`, err);
+    }
 
     // Check completion
     if (timeLeft <= 0) {
-      this._completeAuction(auctionId);
+      if (!state.isCompleting) {
+        state.isCompleting = true;
+        const queue = this.processingQueues.get(auctionId) || Promise.resolve();
+        const resultPromise = queue.then(() => this._completeAuction(auctionId));
+        this.processingQueues.set(
+          auctionId,
+          resultPromise.catch((err) => {
+            console.error(`[AuctionEngine] Error completing auction ${auctionId}:`, err);
+            state.isCompleting = false; // Allow retry on next tick
+          })
+        );
+      }
     }
   }
 
@@ -67,12 +100,12 @@ class AuctionEngine {
     const state = this.activeAuctions.get(auctionId);
     if (!state) return;
 
-    clearInterval(state.timer);
-    this.activeAuctions.delete(auctionId);
-    this.processingQueues.delete(auctionId);
-
-    // Update DB
+    // Update DB first
     const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      return; // Auction no longer exists
+    }
+    
     auction.status = "completed";
     if (state.highestBidder) {
       auction.winner = state.highestBidder;
@@ -88,11 +121,20 @@ class AuctionEngine {
       },
     });
 
-    const io = getIO();
-    io.to(auctionId).emit("auction-completed", {
-      winner: state.highestBidder,
-      finalBid: state.currentHighestBid,
-    });
+    // Cleanup state only after successful persistence
+    clearInterval(state.timer);
+    this.activeAuctions.delete(auctionId);
+    this.processingQueues.delete(auctionId);
+
+    try {
+      const io = getIO();
+      io.to(auctionId).emit("auction-completed", {
+        winner: state.highestBidder,
+        finalBid: state.currentHighestBid,
+      });
+    } catch (err) {
+      console.error(`[AuctionEngine] Error emitting auction-completed for ${auctionId}:`, err);
+    }
     console.log(`[AuctionEngine] Auction ${auctionId} completed!`);
   }
 
@@ -120,36 +162,48 @@ class AuctionEngine {
     if (!state) throw new Error("Auction is not active");
     if (Date.now() >= state.endTime) throw new Error("Auction has ended");
 
-    const auction = await Auction.findById(auctionId);
     const minIncrement = 10; // e.g., 10 units
-
     if (amount < state.currentHighestBid + minIncrement) {
-      throw new Error(
-        `Bid must be at least ${state.currentHighestBid + minIncrement}`,
-      );
+      throw new Error(`Bid must be at least ${state.currentHighestBid + minIncrement}`);
     }
 
-    // Update State
-    state.currentHighestBid = amount;
-    state.highestBidder = userId.toString();
-    state.activeBidders.add(userId.toString());
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const auction = await Auction.findById(auctionId).session(session);
+      if (!auction) {
+        throw new Error("Auction not found");
+      }
 
-    // Update DB (Atomic-ish)
-    auction.currentHighestBid = amount;
-    auction.highestBidder = userId;
-    await auction.save();
+      // Update State
+      state.currentHighestBid = amount;
+      state.highestBidder = userId.toString();
+      state.activeBidders.add(userId.toString());
 
-    await Bid.create({
-      auction: auctionId,
-      bidder: userId,
-      amount: amount,
-    });
+      // Update DB
+      auction.currentHighestBid = amount;
+      auction.highestBidder = userId;
+      await auction.save({ session });
 
-    await Timeline.create({
-      auction: auctionId,
-      eventType: "bid_placed",
-      eventData: { bidder: userId, amount: amount },
-    });
+      await Bid.create([{
+        auction: auctionId,
+        bidder: userId,
+        amount: amount,
+      }], { session });
+
+      await Timeline.create([{
+        auction: auctionId,
+        eventType: "bid_placed",
+        eventData: { bidder: userId, amount: amount },
+      }], { session });
+      
+      await session.commitTransaction();
+      session.endSession();
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      throw err;
+    }
 
     // Broadcast
     const io = getIO();

@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import envConfig from "../config/env.config.js";
 import { engine } from "../services/auction-engine.service.js";
 import { handleChat } from "./chat.handler.js";
+import { verifyToken } from "../utils/jwt.util.js";
+import User from "../models/user.model.js";
 
 let io;
 
@@ -14,6 +16,39 @@ export const initializeSocket = (server) => {
     },
   });
 
+  io.use(async (socket, next) => {
+    try {
+      let token;
+      if (socket.handshake.auth && socket.handshake.auth.token) {
+        token = socket.handshake.auth.token;
+      } else if (socket.handshake.headers && socket.handshake.headers.authorization) {
+        const authHeader = socket.handshake.headers.authorization;
+        if (authHeader.startsWith('Bearer ')) {
+          token = authHeader.split(' ')[1];
+        }
+      }
+      
+      if (!token) {
+        return next(new Error("Authentication error: Token missing"));
+      }
+
+      const decoded = verifyToken(token, process.env.JWT_SECRET || 'fallback_secret');
+      if (!decoded) {
+        return next(new Error("Authentication error: Invalid token"));
+      }
+
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        return next(new Error("Authentication error: User not found"));
+      }
+
+      socket.data.user = user;
+      next();
+    } catch (err) {
+      next(new Error("Authentication error"));
+    }
+  });
+
   io.on("connection", (socket) => {
     console.log(`Socket connected: ${socket.id}`);
 
@@ -24,8 +59,9 @@ export const initializeSocket = (server) => {
     });
 
     // Handle bids
-    socket.on("place-bid", async ({ auctionId, userId, amount }, callback) => {
+    socket.on("place-bid", async ({ auctionId, amount }, callback) => {
       try {
+        const userId = socket.data.user._id;
         const result = await engine.submitBid(auctionId, userId, amount);
         if (callback) callback(result);
       } catch (error) {
