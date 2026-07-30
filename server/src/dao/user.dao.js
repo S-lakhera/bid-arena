@@ -1,7 +1,7 @@
-import User from '../models/user.model.js';
+import User from "../models/user.model.js";
 
 export const findUserByEmail = async (email) => {
-  return await User.findOne({ email }).select('+password'); // Explicitly select password
+  return await User.findOne({ email }).select("+password"); // Explicitly select password
 };
 
 export const findUserById = async (id) => {
@@ -20,7 +20,7 @@ export const addRefreshToken = async (userId, token) => {
   return await User.findByIdAndUpdate(
     userId,
     { $push: { refreshTokens: token } },
-    { new: true }
+    { returnDocument: "after" },
   );
 };
 
@@ -28,7 +28,7 @@ export const removeRefreshToken = async (userId, token) => {
   return await User.findByIdAndUpdate(
     userId,
     { $pull: { refreshTokens: token } },
-    { new: true }
+    { returnDocument: "after" },
   );
 };
 
@@ -36,6 +36,6 @@ export const clearRefreshTokens = async (userId) => {
   return await User.findByIdAndUpdate(
     userId,
     { refreshTokens: [] },
-    { new: true }
+    { returnDocument: "after" },
   );
 };
