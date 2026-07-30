@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -64,7 +65,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <h3 className="text-xl font-medium text-slate-900 mb-2 text-center">Create an account</h3>
       <p className="text-slate-500 text-sm text-center mb-6">
         Step {step} of 2
@@ -85,10 +90,18 @@ export default function RegisterPage() {
       )}
 
       <form className="space-y-6" onSubmit={step === 1 ? handleNext : handleSubmit}>
-        
+        <AnimatePresence mode="wait">
         {/* Step 1 Content */}
-        <div className={`space-y-6 transition-all duration-300 ${step === 1 ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
-          <div>
+        {step === 1 && (
+          <motion.div 
+            key="step1"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <div>
             <label htmlFor="name" className="block text-sm font-medium text-slate-700">
               Full Name
             </label>
@@ -123,20 +136,31 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white transition-colors"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
+            <div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white transition-colors"
+              >
+                Continue
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Step 2 Content */}
-        <div className={`space-y-6 transition-all duration-300 ${step === 2 ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+        {step === 2 && (
+          <motion.div 
+            key="step2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
               Password
             </label>
             <div className="mt-1">
@@ -172,24 +196,28 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="flex-1 flex justify-center py-2.5 px-4 border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-white transition-colors"
-            >
-              Back
-            </button>
-            <button
-              type="submit"
-              disabled={isRegistering}
-              className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isRegistering ? 'Creating...' : 'Create Account'}
-            </button>
-          </div>
-        </div>
-
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isRegistering}
+                className="w-1/3 flex justify-center py-2.5 px-4 border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+              >
+                Back
+              </button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isRegistering}
+                className="w-2/3 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+              >
+                {isRegistering ? 'Creating...' : 'Create Account'}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+        </AnimatePresence>
       </form>
 
       <div className="mt-6">
@@ -224,6 +252,6 @@ export default function RegisterPage() {
           Sign in
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
