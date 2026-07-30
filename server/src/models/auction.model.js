@@ -54,6 +54,14 @@ const auctionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    razorpayOrderId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
