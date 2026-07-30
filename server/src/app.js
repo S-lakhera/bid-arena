@@ -39,11 +39,13 @@ if (envConfig.NODE_ENV === "development") {
 
 // v1 routes
 import authRoutes from './routes/auth.routes.js';
+import auctionRoutes from './routes/auction.routes.js';
 import passport from './config/passport.js';
 
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/auctions", auctionRoutes);
 // ─── Health Check ────────────────────────────────────────
 
 app.get("/api/v1/health", (_req, res) => {

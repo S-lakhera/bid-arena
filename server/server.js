@@ -1,14 +1,22 @@
+import http from 'http';
 import app from './src/app.js';
 import envConfig from './src/config/env.config.js';
 import DatabaseConfig from './src/config/db.config.js';
+import { initializeSocket } from './src/socket/index.js';
 
 const startServer = async () => {
   try {
     // Connect to MongoDB
     await DatabaseConfig.connect();
 
-    // Start Express server
-    app.listen(envConfig.PORT, () => {
+    // Create HTTP server
+    const server = http.createServer(app);
+
+    // Initialize Socket.io
+    initializeSocket(server);
+
+    // Start server
+    server.listen(envConfig.PORT, () => {
       console.log(`\n Homely Server is running`);
       console.log(`   Environment : ${envConfig.NODE_ENV}`);
       console.log(`   Port        : ${envConfig.PORT}`);

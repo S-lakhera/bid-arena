@@ -61,11 +61,11 @@ const auctionSchema = new mongoose.Schema(
 );
 
 // Before saving, ensure endTime is calculated if not explicitly set
-auctionSchema.pre("validate", function (next) {
+auctionSchema.pre("validate", function () {
   if (this.startTime && this.duration && !this.endTime) {
     this.endTime = new Date(this.startTime.getTime() + this.duration);
   }
-  next();
+  return true;
 });
 
 const Auction = mongoose.model("Auction", auctionSchema);
