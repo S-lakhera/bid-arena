@@ -15,7 +15,17 @@ function LoginContent() {
   const urlError = searchParams.get('error') === 'auth_failed' ? 'Google authentication failed. Please try again.' : '';
   const displayError = error || urlError;
   const redirectParam = searchParams.get('redirect');
-  const redirect = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
+  let redirect = '/';
+  if (redirectParam && typeof window !== 'undefined' && !/[\x00-\x1F\\]/.test(redirectParam)) {
+    try {
+      const parsed = new URL(redirectParam, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        redirect = redirectParam;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

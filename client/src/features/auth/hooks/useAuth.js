@@ -32,7 +32,10 @@ export const useAuth = () => {
       }
     }, [query.isSuccess, query.isError, query.data, query.error]);
 
-    return query;
+    const isConfirmedUnauthenticated = query.isError && 
+      (query.error?.response?.status === 401 || query.error?.response?.status === 403);
+
+    return { ...query, isConfirmedUnauthenticated };
   };
 
   const loginMutation = useMutation({
@@ -45,8 +48,15 @@ export const useAuth = () => {
       let target = '/';
       if (variables?.redirect && typeof variables.redirect === 'string') {
         const r = variables.redirect;
-        if (r.startsWith('/') && !r.startsWith('//')) {
-          target = r;
+        if (!/[\x00-\x1F\\]/.test(r)) {
+          try {
+            const parsed = new URL(r, window.location.origin);
+            if (parsed.origin === window.location.origin) {
+              target = r;
+            }
+          } catch (e) {
+            // ignore invalid URLs
+          }
         }
       }
       router.push(target); // Redirect after login
