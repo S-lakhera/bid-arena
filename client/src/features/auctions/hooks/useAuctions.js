@@ -50,8 +50,9 @@ export const useDeleteAuction = () => {
   
   return useMutation({
     mutationFn: auctionApi.deleteAuction,
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['auctions'] });
+      queryClient.invalidateQueries({ queryKey: ['auction', variables] });
     },
   });
 };

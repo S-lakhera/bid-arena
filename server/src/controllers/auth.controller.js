@@ -95,7 +95,8 @@ export const logout = async (req, res) => {
 
     sendSuccess(res, 200, "User logged out successfully");
   } catch (error) {
-    sendError(res, 500, error.stack || "Server Error");
+    console.error(error.stack || error);
+    sendError(res, 500, "Server Error");
   }
 };
 

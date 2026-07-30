@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { List, X } from '@phosphor-icons/react';
 
 export default function Navbar() {
   const { isAuthenticated, user, isInitialized } = useSelector((state) => state.auth);
   const { logout, isLoggingOut, useGetMe } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Trigger auth initialization on global level
   useGetMe();
@@ -86,9 +89,43 @@ export default function Navbar() {
                 </motion.div>
               </div>
             )}
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-slate-500 hover:text-slate-700 focus:outline-none"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <List size={24} />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white border-b border-slate-200 overflow-hidden"
+          >
+            <div className="px-4 pt-2 pb-4 space-y-1">
+              <Link href="/auctions" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 transition-colors">
+                Auctions
+              </Link>
+              <Link href="/how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 transition-colors">
+                How it works
+              </Link>
+              <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 transition-colors">
+                About
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }

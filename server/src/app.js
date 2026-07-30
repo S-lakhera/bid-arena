@@ -18,7 +18,7 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       // Allow localhost or local network IPs for development
-      if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+      if (envConfig.NODE_ENV === "development" && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
         return callback(null, true);
       }
       // Check against configured allowed origins

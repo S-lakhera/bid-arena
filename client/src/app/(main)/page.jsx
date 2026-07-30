@@ -121,7 +121,7 @@ export default function LandingPage() {
             </div>
           ) : isError ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <p className="text-slate-500 font-medium">Failed to establish connection to the auction engine. Retrying...</p>
+              <p className="text-slate-500 font-medium">Failed to establish connection to the auction engine.</p>
             </div>
           ) : auctions.length === 0 ? (
              <div className="text-center py-24 bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -172,7 +172,13 @@ export default function LandingPage() {
                         <div className="text-right">
                           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Time Left</p>
                           <p className="font-semibold text-sm text-orange-600 bg-orange-50 inline-block px-2 py-1 rounded-md border border-orange-100">
-                            {formatDistanceToNow(new Date(new Date(auction.startTime).getTime() + auction.duration * 1000))}
+                            {(() => {
+                              if (!auction.startTime || !auction.duration) return 'N/A';
+                              const endTime = new Date(new Date(auction.startTime).getTime() + auction.duration * 1000);
+                              if (isNaN(endTime.getTime())) return 'N/A';
+                              if (endTime < new Date()) return 'Ended';
+                              return formatDistanceToNow(endTime);
+                            })()}
                           </p>
                         </div>
                       </div>
