@@ -68,10 +68,10 @@ The Socket.IO server is used to manage real-time bids, countdown timers, and liv
   ```json
   {
     "auctionId": "6a6adf1f240b662d51f8affe",
-    "userId": "user_id_here",
     "amount": 250
   }
   ```
+- **Note:** The bidder's identity (`userId`) is securely derived from the authenticated socket session, so you don't need to pass it in the payload.
 
 #### `send-message`
 - **Description:** Send a chat message to the room.
