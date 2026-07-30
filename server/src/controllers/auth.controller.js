@@ -113,7 +113,7 @@ export const googleAuthCallback = async (req, res) => {
 
     // Redirect to frontend with successful auth
     // In production, this would be an environment variable
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = process.env.CLIENT_URL || "http://localhost:3000";
     res.redirect(`${frontendUrl}?auth=success`);
   } catch (error) {
     res.redirect("/login?error=auth_failed");
