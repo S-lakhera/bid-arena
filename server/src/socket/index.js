@@ -8,6 +8,10 @@ import User from "../models/user.model.js";
 let io;
 
 export const initializeSocket = (server) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("FATAL ERROR: JWT_SECRET environment variable is missing.");
+  }
+
   io = new Server(server, {
     cors: {
       origin: envConfig.CLIENT_URL,
@@ -32,7 +36,7 @@ export const initializeSocket = (server) => {
         return next(new Error("Authentication error: Token missing"));
       }
 
-      const decoded = verifyToken(token, process.env.JWT_SECRET || 'fallback_secret');
+      const decoded = verifyToken(token, process.env.JWT_SECRET);
       if (!decoded) {
         return next(new Error("Authentication error: Invalid token"));
       }

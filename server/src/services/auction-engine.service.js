@@ -167,10 +167,26 @@ class AuctionEngine {
       throw new Error(`Bid must be at least ${state.currentHighestBid + minIncrement}`);
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    let session = null;
+    let useTransaction = false;
+
     try {
-      const auction = await Auction.findById(auctionId).session(session);
+      session = await mongoose.startSession();
+      session.startTransaction();
+      useTransaction = true;
+    } catch (e) {
+      if (session) {
+        await session.endSession();
+        session = null;
+      }
+      console.warn("[AuctionEngine] MongoDB transactions not supported. Falling back to non-transactional writes.");
+    }
+
+    try {
+      let query = Auction.findById(auctionId);
+      if (useTransaction) query = query.session(session);
+      
+      const auction = await query;
       if (!auction) {
         throw new Error("Auction not found");
       }
@@ -183,25 +199,23 @@ class AuctionEngine {
       // Update DB
       auction.currentHighestBid = amount;
       auction.highestBidder = userId;
-      await auction.save({ session });
+      await auction.save(useTransaction ? { session } : undefined);
 
-      await Bid.create([{
-        auction: auctionId,
-        bidder: userId,
-        amount: amount,
-      }], { session });
+      const bidDocs = [{ auction: auctionId, bidder: userId, amount: amount }];
+      await Bid.create(bidDocs, useTransaction ? { session } : undefined);
 
-      await Timeline.create([{
-        auction: auctionId,
-        eventType: "bid_placed",
-        eventData: { bidder: userId, amount: amount },
-      }], { session });
+      const timelineDocs = [{ auction: auctionId, eventType: "bid_placed", eventData: { bidder: userId, amount: amount } }];
+      await Timeline.create(timelineDocs, useTransaction ? { session } : undefined);
       
-      await session.commitTransaction();
-      session.endSession();
+      if (useTransaction) {
+        await session.commitTransaction();
+        session.endSession();
+      }
     } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
+      if (useTransaction) {
+        await session.abortTransaction();
+        session.endSession();
+      }
       throw err;
     }
 
