@@ -12,10 +12,23 @@ class AuctionEngine {
   // Load active auctions from DB on startup
   async loadActiveAuctions() {
     const active = await Auction.find({ status: "active" });
+    console.log(
+      `[AuctionEngine] Found ${active.length} active auctions in DB.`,
+    );
     active.forEach((auction) => {
       this._initializeAuctionState(auction);
     });
-    console.log(`Loaded ${active.length} active auctions into engine.`);
+    console.log(
+      `[AuctionEngine] Loaded ${active.length} active auctions into engine.`,
+    );
+  }
+
+  // Add a newly created single auction to the engine dynamically
+  addAuction(auction) {
+    if (auction.status === "active") {
+      this._initializeAuctionState(auction);
+      console.log(`[AuctionEngine] Added newly created auction ${auction._id} into engine.`);
+    }
   }
 
   _initializeAuctionState(auction) {
@@ -23,7 +36,9 @@ class AuctionEngine {
     this.activeAuctions.set(auctionId, {
       id: auctionId,
       currentHighestBid: auction.currentHighestBid,
-      highestBidder: auction.highestBidder ? auction.highestBidder.toString() : null,
+      highestBidder: auction.highestBidder
+        ? auction.highestBidder.toString()
+        : null,
       endTime: auction.endTime.getTime(),
       timer: setInterval(() => this._tick(auctionId), 1000),
       activeBidders: new Set(),
@@ -37,7 +52,7 @@ class AuctionEngine {
 
     const now = Date.now();
     const timeLeft = Math.max(0, Math.floor((state.endTime - now) / 1000));
-    
+
     // Broadcast time left
     const io = getIO();
     io.to(auctionId).emit("timer-sync", { timeLeft });
@@ -66,13 +81,19 @@ class AuctionEngine {
 
     await Timeline.create({
       auction: auctionId,
-      eventType: "Completed",
-      metadata: { winner: state.highestBidder, finalBid: state.currentHighestBid },
+      eventType: "completed",
+      eventData: {
+        winner: state.highestBidder,
+        finalBid: state.currentHighestBid,
+      },
     });
 
     const io = getIO();
-    io.to(auctionId).emit("auction-completed", { winner: state.highestBidder, finalBid: state.currentHighestBid });
-    console.log(`Auction ${auctionId} completed.`);
+    io.to(auctionId).emit("auction-completed", {
+      winner: state.highestBidder,
+      finalBid: state.currentHighestBid,
+    });
+    console.log(`[AuctionEngine] Auction ${auctionId} completed!`);
   }
 
   // Submit a bid sequentially per auction
@@ -83,8 +104,13 @@ class AuctionEngine {
 
     // Queue the bid processing to ensure deterministic order
     const queue = this.processingQueues.get(auctionId);
-    const resultPromise = queue.then(() => this._processBid(auctionId, userId, amount));
-    this.processingQueues.set(auctionId, resultPromise.catch(() => {})); // Catch to prevent chain break
+    const resultPromise = queue.then(() =>
+      this._processBid(auctionId, userId, amount),
+    );
+    this.processingQueues.set(
+      auctionId,
+      resultPromise.catch(() => {}),
+    ); // Catch to prevent chain break
 
     return await resultPromise;
   }
@@ -98,7 +124,9 @@ class AuctionEngine {
     const minIncrement = 10; // e.g., 10 units
 
     if (amount < state.currentHighestBid + minIncrement) {
-      throw new Error(`Bid must be at least ${state.currentHighestBid + minIncrement}`);
+      throw new Error(
+        `Bid must be at least ${state.currentHighestBid + minIncrement}`,
+      );
     }
 
     // Update State
@@ -119,8 +147,8 @@ class AuctionEngine {
 
     await Timeline.create({
       auction: auctionId,
-      eventType: "BidPlaced",
-      metadata: { bidder: userId, amount: amount },
+      eventType: "bid_placed",
+      eventData: { bidder: userId, amount: amount },
     });
 
     // Broadcast

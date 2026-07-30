@@ -1,8 +1,11 @@
 import Auction from "../models/auction.model.js";
+import { engine } from "./auction-engine.service.js";
 
 export const createAuction = async (auctionData) => {
   const auction = new Auction(auctionData);
-  return await auction.save();
+  const savedAuction = await auction.save();
+  engine.addAuction(savedAuction);
+  return savedAuction;
 };
 
 export const getAuctions = async (filters = {}) => {

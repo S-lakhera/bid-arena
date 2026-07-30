@@ -3,6 +3,7 @@ import app from "./src/app.js";
 import envConfig from "./src/config/env.config.js";
 import DatabaseConfig from "./src/config/db.config.js";
 import { initializeSocket } from "./src/socket/index.js";
+import { engine } from "./src/services/auction-engine.service.js";
 
 const startServer = async () => {
   try {
@@ -14,6 +15,7 @@ const startServer = async () => {
 
     // Initialize Socket.io
     initializeSocket(server);
+    await engine.loadActiveAuctions();
 
     // Start server
     server.listen(envConfig.PORT, () => {

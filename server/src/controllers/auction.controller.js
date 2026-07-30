@@ -13,6 +13,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 export const createAuction = async (req, res) => {
   const auctionData = {
     ...req.body,
+    status: new Date(req.body.startTime) <= new Date() ? "active" : "upcoming",
     seller: req.user._id,
   };
   const auction = await auctionService.createAuction(auctionData);
